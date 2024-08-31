@@ -4,9 +4,10 @@ import 'package:intl/intl.dart';
 
 class NewExpense extends StatefulWidget {
   final void Function(String title, double amount, DateTime date)? onSave;
-
-  const NewExpense({super.key, this.onSave});
-
+  const NewExpense({
+    super.key,
+    this.onSave
+  });
   @override
   State<NewExpense> createState() => _NewExpenseState();
 }
@@ -17,7 +18,6 @@ class _NewExpenseState extends State<NewExpense> {
   DateTime? _selectedDate;
   Category? _selectedCategory;
   final DateFormat _formatter = DateFormat.yMd();
-
   void _presentDatePicker() async {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 1, now.month, now.day);
@@ -30,6 +30,34 @@ class _NewExpenseState extends State<NewExpense> {
     setState(() {
       _selectedDate = pickedDate;
     });
+  }
+
+  void _saveExpense() {
+    // This method is for saving the expenses on homepage(_registeredExpense)
+    final enteredAmount = double.tryParse(_amountController.text);
+    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+    if (_titleController.text.trim().isEmpty ||
+        amountIsInvalid ||
+        _selectedDate == null) {
+      // show error message
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Invalid input'),
+          content: const Text(
+              'Please make sure a valid title, amount,date and category was entered.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: Text('Okay'),
+            )
+          ],
+        ),
+      );
+      return;
+    }
   }
 
   @override
@@ -116,28 +144,7 @@ class _NewExpenseState extends State<NewExpense> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Add validation here before printing or saving the expense
-                    if (_titleController.text.isEmpty ||
-                        _amountController.text.isEmpty ||
-                        _selectedDate == null ||
-                        _selectedCategory == null) {
-                      // Check for category
-                      // You might want to show an error message here
-                      print('Please fill in all fields');
-                      return;
-                    }
-
-                    if (widget.onSave != null) {
-                      widget.onSave!(
-                        _titleController.text,
-                        double.parse(_amountController.text),
-                        _selectedDate!,
-                      );
-                    }
-
-                    Navigator.pop(context);
-                  },
+                  onPressed: _saveExpense,
                   child: const Text('Save Expense'),
                 ),
               ],

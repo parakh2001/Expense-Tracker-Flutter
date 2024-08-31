@@ -31,6 +31,12 @@ class _ExpensesState extends State<Expenses> {
     );
   }
 
+  void addNewExpense(Expense expense) {
+    setState(() {
+      _registeredExpenses.add(expense);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(

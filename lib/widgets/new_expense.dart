@@ -66,9 +66,7 @@ class _NewExpenseState extends State<NewExpense> {
       date: _selectedDate!,
       category: _selectedCategory!,
     );
-
     widget.onAddExpense(newExpense);
-
     Navigator.of(context).pop();
   }
 
@@ -112,15 +110,19 @@ class _NewExpenseState extends State<NewExpense> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Expanded(
+                        Flexible(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(
-                                _selectedDate == null
-                                    ? 'No date selected'
-                                    : _formatter.format(_selectedDate!),
+                              Expanded(
+                                child: Text(
+                                  _selectedDate == null
+                                      ? 'No date selected'
+                                      : _formatter.format(_selectedDate!),
+                                  overflow: TextOverflow
+                                      .ellipsis, // Ensures the text doesn't overflow
+                                ),
                               ),
                               IconButton(
                                 onPressed: _presentDatePicker,

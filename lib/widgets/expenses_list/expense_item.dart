@@ -34,7 +34,7 @@ class ExpenseItem extends StatelessWidget {
                       width: 8,
                     ),
                     Text(
-                      expense.FormattedDate,
+                      expense.formattedDate,
                     ),
                   ],
                 ),

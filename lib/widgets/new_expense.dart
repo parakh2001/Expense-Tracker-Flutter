@@ -1,15 +1,16 @@
-import 'package:expense_tracker/models/expense.dart'; // Make sure this file defines `Category` enum
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/expense.dart';
 
 class NewExpense extends StatefulWidget {
-  final void Function(String title, double amount, DateTime date)? onSave;
   const NewExpense({
     super.key,
-    this.onSave,
     required this.onAddExpense,
   });
   final void Function(Expense expense) onAddExpense;
+
   @override
   State<NewExpense> createState() => _NewExpenseState();
 }
@@ -20,6 +21,7 @@ class _NewExpenseState extends State<NewExpense> {
   DateTime? _selectedDate;
   Category? _selectedCategory;
   final DateFormat _formatter = DateFormat.yMd();
+
   void _presentDatePicker() async {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 1, now.month, now.day);
@@ -34,40 +36,64 @@ class _NewExpenseState extends State<NewExpense> {
     });
   }
 
-  void _saveExpense() {
-    // This method is for saving the expenses on homepage(_registeredExpense)
+  void _saveExpense() async {
     final enteredAmount = double.tryParse(_amountController.text);
     final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+
     if (_titleController.text.trim().isEmpty ||
         amountIsInvalid ||
-        _selectedDate == null) {
-      // show error message
+        _selectedDate == null ||
+        _selectedCategory == null) {
+      // Show error message
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text('Invalid input'),
+          title: const Text('Invalid input'),
           content: const Text(
-              'Please make sure a valid title, amount,date and category was entered.'),
+              'Please make sure a valid title, amount, date, and category were entered.'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
               },
-              child: Text('Okay'),
+              child: const Text('Okay'),
             )
           ],
         ),
       );
       return;
     }
+
     final newExpense = Expense(
       title: _titleController.text,
       amount: enteredAmount,
       date: _selectedDate!,
       category: _selectedCategory!,
     );
+
+    // Call the callback to add the expense to the homepage list
     widget.onAddExpense(newExpense);
-    Navigator.of(context).pop();
+
+    // Close the modal immediately
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+
+    // Save to SharedPreferences after the modal is closed
+    final prefs = await SharedPreferences.getInstance();
+    final expenseListJson = prefs.getString('expenses');
+    List<Map<String, dynamic>> expenseList = [];
+
+    if (expenseListJson != null) {
+      expenseList =
+          List<Map<String, dynamic>>.from(jsonDecode(expenseListJson));
+    }
+
+    // Add the new expense to the list
+    expenseList.add(newExpense.toJson());
+
+    // Save the updated list to SharedPreferences
+    await prefs.setString('expenses', jsonEncode(expenseList));
   }
 
   @override
@@ -120,8 +146,7 @@ class _NewExpenseState extends State<NewExpense> {
                                   _selectedDate == null
                                       ? 'No date selected'
                                       : _formatter.format(_selectedDate!),
-                                  overflow: TextOverflow
-                                      .ellipsis, // Ensures the text doesn't overflow
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               IconButton(
@@ -156,7 +181,7 @@ class _NewExpenseState extends State<NewExpense> {
                               });
                             },
                           ),
-                          Spacer(),
+                          const Spacer(),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
